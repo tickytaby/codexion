@@ -1,0 +1,10 @@
+obj/
+codexion
+a.out
+*.o
+*.d
+compile_commands.json
+.cache/
+en.subject.pdf
+compile_flags.txt
+notes.md
