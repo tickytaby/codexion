@@ -57,4 +57,6 @@ typedef struct Table
 	t_bookkeeping	books;
 }	t_table;
 
+long	now_ms(void);
+
 #endif

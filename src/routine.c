@@ -130,7 +130,7 @@ void	log_action(t_coder *c, char *action)
 	pthread_mutex_lock(&c->table->print_lock);
 	t = now_ms() - c->table->start_time;
 	if (!stopped(c->table))
-		printf("%ld %d %s\n", t, c->id, action);
+		printf("%ld %d %s\n", t, c->id + 1, action);
 	pthread_mutex_unlock(&c->table->print_lock);
 }
 
@@ -195,10 +195,8 @@ void	release_dongles(t_coder *c)
 	pthread_cond_broadcast(&c->right->cond);
 }
 
-
 void	compile(t_coder *c)
 {
-	
 	pthread_mutex_lock(&c->lock);
 	c->last_compile_start = now_ms();
 	pthread_mutex_unlock(&c->lock);
