@@ -52,7 +52,6 @@ t_cliArgsValidation	validate_cli_args(int argc, char *argv[])
 		out.cli_args.values[i - 1] = validate_numstr(argv[i]).val;
 	}
 	out.cli_args.scheduler = argv[8];
-	print_args(out.cli_args);
 	return (out);
 }
 
