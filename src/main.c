@@ -11,14 +11,14 @@ int	init_dongles(t_table *t, int n)
 	
 	i = 0;
 	memset(t->dongles, 0, sizeof(t_dongle) * n);
+	if (pthread_mutex_init(&t->dongle_lock, NULL))
+		return (1);
+	t->books.dongle_lock_ready++;
+	if (pthread_cond_init(&t->dongle_cond, NULL))
+		return (1);
+	t->books.dongle_cond_ready++;
 	while (i < n)
 	{
-		if (pthread_mutex_init(&t->dongles[i].lock, NULL))
-			return (1);
-		t->books.dongles_locks_ready++;
-		if (pthread_cond_init(&t->dongles[i].cond, NULL))
-			return (1);
-		t->books.dongles_cond_ready++;
 		t->dongles[i].queue[0].coder_id = -1;
 		t->dongles[i].queue[1].coder_id = -1;
 		t->dongles[i].id = i;
@@ -79,10 +79,10 @@ void	destroy_table(t_table *t)
 {
 	while (t->books.coders_ready-- > 0)
 		pthread_mutex_destroy(&t->coders[t->books.coders_ready].lock);
-	while (t->books.dongles_locks_ready-- > 0)
-		pthread_mutex_destroy(&t->dongles[t->books.dongles_locks_ready].lock);
-	while (t->books.dongles_cond_ready-- > 0)
-		pthread_cond_destroy(&t->dongles[t->books.dongles_cond_ready].cond);
+	if (t->books.dongle_lock_ready)
+		pthread_mutex_destroy(&t->dongle_lock);
+	if (t->books.dongle_cond_ready)
+		pthread_cond_destroy(&t->dongle_cond);
 	free(t->dongles);
 	free(t->coders);
 	if (t->books.print_lock_ready)
@@ -115,8 +115,6 @@ int	main(int argc, char *argv[])
 	pthread_t			monitor;
 
 	args = validate_cli_args(argc, argv);
-	if (args.error == 5)
-		return (display_args(args), 0);
 	if (args.error)
 		return (display_args(args), 1);
 

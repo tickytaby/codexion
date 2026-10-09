@@ -8,13 +8,12 @@ typedef struct Waiter
 {
 	int		coder_id;
 	long	key;
+	long	ticket;
 }	t_waiter;
 
 typedef struct Dongle
 {
 	int				id;
-	pthread_mutex_t	lock;
-	pthread_cond_t	cond;
 	int				in_use;
 	long			available_at;
 	t_waiter		queue[2];
@@ -35,8 +34,8 @@ typedef struct Coder
 typedef struct BookKeeping
 {
 	int	coders_ready;
-	int	dongles_cond_ready;
-	int	dongles_locks_ready;
+	int	dongle_lock_ready;
+	int	dongle_cond_ready;
 	int	print_lock_ready;
 	int	start_lock_ready;
 	int	stop_lock_ready;
@@ -52,6 +51,9 @@ typedef struct Table
 	pthread_mutex_t	print_lock;
 	pthread_mutex_t	start_lock;
 	pthread_cond_t	start_cond;
+	pthread_mutex_t	dongle_lock;
+	pthread_cond_t	dongle_cond;
+	long			ticket;
 	t_coder			*coders;
 	t_dongle		*dongles;
 	t_bookkeeping	books;

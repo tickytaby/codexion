@@ -53,8 +53,6 @@ t_cliArgsValidation	validate_cli_args(int argc, char *argv[])
 			return (out.error = 4, out);
 		if (i == 7 && validate_numstr(argv[i]).val < 0)
 			return (out.error = 6, out);
-		if (i == 1 && validate_numstr(argv[i]).val == 1)
-			return (out.error = 5, out);
 		if (validate_numstr(argv[i]).error)
 			return (out.error = 3, out);
 		out.cli_args.values[i - 1] = validate_numstr(argv[i]).val;
@@ -74,8 +72,8 @@ void	display_args(t_cliArgsValidation args)
 	else if (args.error == 3)
 		printf("Error validating cli args: non-numerical/negative-valued arg "
 			"provided where positive numeric vals were expected\n");
-	else if (args.error == 4 || args.error == 5)
-		printf("Error validating cli args: at least two coders are required"
+	else if (args.error == 4)
+		printf("Error validating cli args: at least one coder is required"
 			" to run the simulation\n");
 	else if (args.error == 6)
 		printf("Error validating cli args: DONGLE_COOLDOWN is mandatory (cannot be 0)\n");

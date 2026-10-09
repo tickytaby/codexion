@@ -61,6 +61,9 @@ void	*monitor_routine(void *arg)
 	pthread_mutex_lock(&t->stop_lock);
 	t->stop= 1;
 	pthread_mutex_unlock(&t->stop_lock);
+	pthread_mutex_lock(&t->dongle_lock);
+	pthread_cond_broadcast(&t->dongle_cond);
+	pthread_mutex_unlock(&t->dongle_lock);
 	// int i = -1;
 	if (cond[0] == 2)
 	{
