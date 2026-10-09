@@ -58,5 +58,9 @@ typedef struct Table
 }	t_table;
 
 long	now_ms(void);
+void	log_action(t_coder *c, char *action);
+void	*coder_routine(void *arg);
+void	should_stop(t_table *t, t_coder *c, int num_coders, int *cond);
+void	*monitor_routine(void *arg);
 
 #endif

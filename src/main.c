@@ -28,7 +28,6 @@ int	init_dongles(t_table *t, int n)
 
 int init_coders(t_table *t, int n)
 {
-	// At the end of this function call, coder.thread is NULL
 	int i;
 
 	i = 0;
@@ -107,7 +106,9 @@ int	main(int argc, char *argv[])
 {
 	t_cliArgsValidation	args;
 	t_cliArgs			cli_args;
-	t_table				table;
+	t_table				t;
+	int					i;
+	pthread_t			monitor;
 
 	args = validate_cli_args(argc, argv);
 	display_args(args);
@@ -115,8 +116,19 @@ int	main(int argc, char *argv[])
 		return (1);
 
 	cli_args = args.cli_args;
-	if (init_table(&table, cli_args))
-		return (destroy_table(&table), 1);
-	display_table(&table);
+	if (init_table(&t, cli_args))
+		return (destroy_table(&t), 1);
+	display_table(&t);
+	i = -1;
+	while (++i < cli_args.values[NUM_CODERS])
+		pthread_create(&t.coders[i].thread, NULL, &coder_routine, &t.coders[i]);
+	pthread_create(&monitor, NULL, &monitor_routine, &t);
+	pthread_mutex_lock(&t.start_lock);
+	t.start = 1;
+	t.start_time = now_ms();
+	pthread_mutex_unlock(&t.start_lock);
+	pthread_join(monitor, NULL);
+	// while (--i >= 0)
+	// 	pthread_join(t.coders[i].thread, NULL);
 	return (0);
 }

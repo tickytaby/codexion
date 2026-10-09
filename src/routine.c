@@ -1,8 +1,10 @@
 #include "codexion.h"
+#include "parser.h"
 #include <string.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 
 long	now_ms(void)
 {
@@ -195,16 +197,19 @@ void	release_dongles(t_coder *c)
 	pthread_cond_broadcast(&c->right->cond);
 }
 
-void	compile(t_coder *c)
+int	compile(t_coder *c)
 {
 	pthread_mutex_lock(&c->lock);
 	c->last_compile_start = now_ms();
 	pthread_mutex_unlock(&c->lock);
 	log_action(c, "is compiling");
-	sim_sleep(c->table, c->table->cli_args.values[TIME_TO_COMPILE]);
+	// what happens when we stop sim_sleep because stopped is true??
+	if (sim_sleep(c->table, c->table->cli_args.values[TIME_TO_COMPILE]))
+		return (0);
 	pthread_mutex_lock(&c->lock);
 	c->compiles_done++;
 	pthread_mutex_unlock(&c->lock);
+	return (1);
 }
 
 void	refactor(t_coder *c)
@@ -224,6 +229,10 @@ void	*coder_routine(void *arg)
 	t_coder	*c;
 
 	c = (t_coder *)arg;
+	pthread_mutex_lock(&c->lock);
+	c->last_compile_start = LONG_MAX - c->table->cli_args.values[TIME_TO_BURNOUT];
+	pthread_mutex_unlock(&c->lock);
+	log_action(c, "started");
 	pthread_mutex_lock(&c->table->start_lock);
 	while (!c->table->start)
 		pthread_cond_wait(&c->table->start_cond, &c->table->start_lock);
@@ -232,10 +241,14 @@ void	*coder_routine(void *arg)
 	{
 		if (take_dongles(c))
 			break;
-		compile(c);
+		if (!compile(c))
+			break;
+		if (stopped(c->table))
+			break;
 		release_dongles(c);
 		debug(c);
 		refactor(c);
 	}
+	log_action(c, "ending");
 	return (NULL);
 }

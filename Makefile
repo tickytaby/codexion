@@ -7,7 +7,7 @@ CPPFLAGS = -I includes -MMD -MP
 SRC_DIR = src
 OBJ_DIR = obj
 
-SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/parser.c
+SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/parser.c $(SRC_DIR)/monitor.c $(SRC_DIR)/routine.c
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
