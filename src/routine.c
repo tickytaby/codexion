@@ -16,9 +16,14 @@ long	now_ms(void)
 
 long	queue_key(t_coder *c)
 {
+	long	last;
+
+	pthread_mutex_lock(&c->lock);
+	last = c->last_compile_start;
+	pthread_mutex_unlock(&c->lock);
 	if (!strcmp(c->table->cli_args.scheduler, "fifo"))
 		return (now_ms());
-	return (c->last_compile_start + (long)c->table->cli_args.values[TIME_TO_BURNOUT]);
+	return (last + (long)c->table->cli_args.values[TIME_TO_BURNOUT]);
 }
 
 void	push(t_coder *c, t_dongle *d, long key)
@@ -203,7 +208,6 @@ int	compile(t_coder *c)
 	c->last_compile_start = now_ms();
 	pthread_mutex_unlock(&c->lock);
 	log_action(c, "is compiling");
-	// what happens when we stop sim_sleep because stopped is true??
 	if (sim_sleep(c->table, c->table->cli_args.values[TIME_TO_COMPILE]))
 		return (0);
 	pthread_mutex_lock(&c->lock);
@@ -229,10 +233,6 @@ void	*coder_routine(void *arg)
 	t_coder	*c;
 
 	c = (t_coder *)arg;
-	pthread_mutex_lock(&c->lock);
-	c->last_compile_start = LONG_MAX - c->table->cli_args.values[TIME_TO_BURNOUT];
-	pthread_mutex_unlock(&c->lock);
-	log_action(c, "started");
 	pthread_mutex_lock(&c->table->start_lock);
 	while (!c->table->start)
 		pthread_cond_wait(&c->table->start_cond, &c->table->start_lock);
@@ -241,14 +241,10 @@ void	*coder_routine(void *arg)
 	{
 		if (take_dongles(c))
 			break;
-		if (!compile(c))
-			break;
-		if (stopped(c->table))
-			break;
+		compile(c);
 		release_dongles(c);
 		debug(c);
 		refactor(c);
 	}
-	log_action(c, "ending");
 	return (NULL);
 }

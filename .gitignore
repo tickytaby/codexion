@@ -9,3 +9,4 @@ en.subject.pdf
 compile_flags.txt
 notes.md
 tester.sh
+*.txt
