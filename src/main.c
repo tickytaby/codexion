@@ -55,9 +55,12 @@ int	init_table(t_table *t, t_cliArgs args)
 	if (pthread_mutex_init(&t->print_lock, NULL))
 		return (1);
 	t->books.print_lock_ready++;
-	if (pthread_mutex_init(&t->start_lock, NULL))
+	if (pthread_mutex_init(&t->start_lock, NULL)) 
 		return (1);
 	t->books.start_lock_ready++;
+	if (pthread_cond_init(&t->start_cond, NULL))
+		return (1);
+	t->books.start_cond_ready++;
 	if (pthread_mutex_init(&t->stop_lock, NULL))
 		return (1);
 	t->books.stop_lock_ready++;
@@ -83,6 +86,8 @@ void	destroy_table(t_table *t)
 		pthread_mutex_destroy(&t->dongle_lock);
 	if (t->books.dongle_cond_ready)
 		pthread_cond_destroy(&t->dongle_cond);
+	if (t->books.start_cond_ready)
+		pthread_cond_destroy(&t->start_cond);
 	free(t->dongles);
 	free(t->coders);
 	if (t->books.print_lock_ready)
@@ -91,7 +96,6 @@ void	destroy_table(t_table *t)
 		pthread_mutex_destroy(&t->start_lock);
 	if (t->books.stop_lock_ready)
 		pthread_mutex_destroy(&t->stop_lock);
-
 }
 
 void	display_table(t_table *t)
@@ -106,45 +110,60 @@ void	display_table(t_table *t)
 	}
 }
 
+void	release_start(t_table *t, int failed)
+{
+	// Opens the start barrier. If thread creation failed, stop is set first
+	// so every thread already created exits as soon as it wakes up.
+	int	i;
+
+	if (failed)
+	{
+		pthread_mutex_lock(&t->stop_lock);
+		t->stop = 1;
+		pthread_mutex_unlock(&t->stop_lock);
+	}
+	pthread_mutex_lock(&t->start_lock);
+	t->start = 1;
+	t->start_time = now_ms();
+	i = -1;
+	while (++i < t->cli_args.values[NUM_CODERS])
+	{
+		pthread_mutex_lock(&t->coders[i].lock);
+		t->coders[i].last_compile_start = t->start_time;
+		pthread_mutex_unlock(&t->coders[i].lock);
+	}
+	pthread_cond_broadcast(&t->start_cond);
+	pthread_mutex_unlock(&t->start_lock);
+}
+
 int	main(int argc, char *argv[])
 {
 	t_cliArgsValidation	args;
-	t_cliArgs			cli_args;
 	t_table				t;
+	int					created;
 	int					i;
 	pthread_t			monitor;
 
 	args = validate_cli_args(argc, argv);
 	if (args.error)
 		return (display_args(args), 1);
-
-	cli_args = args.cli_args;
-	if (init_table(&t, cli_args))
+	if (init_table(&t, args.cli_args))
 		return (destroy_table(&t), 1);
-	// display_table(&t);
+	if (pthread_create(&monitor, NULL, &monitor_routine, &t))
+		return (printf("Error: failed to create monitor thread\n"),
+			destroy_table(&t), 1);
+	created = 0;
+	while (created < t.cli_args.values[NUM_CODERS]
+		&& !pthread_create(&t.coders[created].thread, NULL, &coder_routine,
+			&t.coders[created]))
+		created++;
+	release_start(&t, created < t.cli_args.values[NUM_CODERS]);
 	i = -1;
-	pthread_create(&monitor, NULL, &monitor_routine, &t);
-	while (++i < cli_args.values[NUM_CODERS])
-		pthread_create(&t.coders[i].thread, NULL, &coder_routine, &t.coders[i]);
-	pthread_mutex_lock(&t.start_lock);
-	t.start = 1;
-	t.start_time = now_ms();
-	i = -1;
-	while (++i < cli_args.values[NUM_CODERS])
-	{
-		pthread_mutex_lock(&t.coders[i].lock);
-		t.coders[i].last_compile_start = t.start_time;
-	// 	pthread_mutex_lock(&t.print_lock);
-	// 	printf("Coder #%d -> now %ld vs last compile start %ld\n", i+1, now_ms(), t.coders[i].last_compile_start);
-	// 	pthread_mutex_unlock(&t.print_lock);
-		pthread_mutex_unlock(&t.coders[i].lock);
-	 }
-	pthread_mutex_unlock(&t.start_lock);
-	pthread_cond_broadcast(&t.start_cond);
-	i = -1;
-	while (++i < cli_args.values[NUM_CODERS])
+	while (++i < created)
 		pthread_join(t.coders[i].thread, NULL);
 	pthread_join(monitor, NULL);
 	destroy_table(&t);
+	if (created < t.cli_args.values[NUM_CODERS])
+		return (printf("Error: failed to create coder thread\n"), 1);
 	return (0);
 }

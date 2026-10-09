@@ -46,6 +46,8 @@ void	*monitor_routine(void *arg)
 	while (!t->start)
 		pthread_cond_wait(&t->start_cond, &t->start_lock);
 	pthread_mutex_unlock(&t->start_lock);
+	if (stopped(t))
+		return (NULL);
 	memset(cond, 0, sizeof(int) * 2);
 	// pthread_mutex_lock(&t->print_lock);
 	// printf("Monitor thread started\n");

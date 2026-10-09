@@ -39,6 +39,7 @@ typedef struct BookKeeping
 	int	print_lock_ready;
 	int	start_lock_ready;
 	int	stop_lock_ready;
+	int	start_cond_ready;
 }	t_bookkeeping;
 
 typedef struct Table
@@ -60,6 +61,7 @@ typedef struct Table
 }	t_table;
 
 long	now_ms(void);
+int		stopped(t_table *t);
 void	log_action(t_coder *c, char *action);
 void	*coder_routine(void *arg);
 void	should_stop(t_table *t, t_coder *c, int num_coders, int *cond);
