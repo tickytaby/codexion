@@ -76,5 +76,6 @@ void	display_args(t_cliArgsValidation args)
 		printf("Error validating cli args: at least one coder is required"
 			" to run the simulation\n");
 	else if (args.error == 6)
-		printf("Error validating cli args: DONGLE_COOLDOWN is mandatory (cannot be 0)\n");
+		printf("Error validating cli args: "
+			"DONGLE_COOLDOWN is mandatory (cannot be 0)\n");
 }
