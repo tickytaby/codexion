@@ -11,8 +11,7 @@ SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/parser.c \
 	$(SRC_DIR)/monitor.c $(SRC_DIR)/routine.c \
 	$(SRC_DIR)/util.c $(SRC_DIR)/coder_actions.c \
 	$(SRC_DIR)/dongle_fn.c $(SRC_DIR)/misc.c \
-	$(SRC_DIR)/queue.c $(SRC_DIR)/routine_util.c \
-	$(SRC_DIR)/util.c
+	$(SRC_DIR)/queue.c $(SRC_DIR)/routine_util.c
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
