@@ -7,7 +7,6 @@ int				init_dongles(t_table *t, int n);
 int				init_coders(t_table *t, int n);
 int				init_table(t_table *t, t_cliArgs args);
 void			destroy_table(t_table *t);
-void			display_table(t_table *t);
 long			queue_key(t_coder *c);
 void			push(t_coder *c, t_dongle *d, long key);
 void			heapify(t_waiter *q);

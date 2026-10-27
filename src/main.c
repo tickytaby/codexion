@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <limits.h>
 #include "util.h"
 #include "parser.h"
 #include "codexion.h"
@@ -60,16 +59,18 @@ int	main(int argc, char *argv[])
 	args = validate_cli_args(argc, argv);
 	if (args.error)
 		return (display_args(args), 1);
+	if (args.cli_args.values[COMPILES_REQUIRED] == 0)
+		return (0);
 	if (init_table(&t, args.cli_args))
 		return (destroy_table(&t), 1);
 	if (pthread_create(&monitor, NULL, &monitor_routine, &t))
-		return (printf("Error: failed to create monitor thread\n"),
+		return (fprintf(stderr, "Error: failed to create monitor thread\n"),
 			destroy_table(&t), 1);
 	created = create_coders(&t);
 	release_start(&t, created < t.cli_args.values[NUM_CODERS]);
 	join_threads(&t, created, monitor);
 	destroy_table(&t);
 	if (created < t.cli_args.values[NUM_CODERS])
-		return (printf("Error: failed to create coder thread\n"), 1);
+		return (fprintf(stderr, "Error: failed to create coder thread\n"), 1);
 	return (0);
 }

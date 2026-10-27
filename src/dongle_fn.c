@@ -1,4 +1,5 @@
 #include "codexion.h"
+#include "parser.h"
 #include "util.h"
 #include <stdio.h>
 
@@ -6,6 +7,7 @@ int	can_take(t_coder *c, t_dongle *d)
 {
 	t_coder	*head;
 	int		free;
+	int		skip;
 
 	free = !d->in_use && d->available_at <= now_ms();
 	if (!free)
@@ -13,7 +15,10 @@ int	can_take(t_coder *c, t_dongle *d)
 	if (peek(d->queue)->coder_id == c->id)
 		return (1);
 	head = &c->table->coders[peek(d->queue)->coder_id];
-	return (peek(other_dongle(head, d)->queue)->coder_id != head->id);
+	skip = now_ms() + c->table->cli_args.values[TIME_TO_COMPILE]
+		+ c->table->cli_args.values[DONGLE_COOLDOWN]
+		<= other_dongle(head, d)->available_at;
+	return (skip);
 }
 
 void	log_action(t_coder *c, char *action)
@@ -62,6 +67,9 @@ void	deq_and_unlock(t_table *t, t_coder *c)
 	deq(c->right, c->id);
 	c->left->in_use = 1;
 	c->right->in_use = 1;
+	c->left->available_at = now_ms() + t->cli_args.values[TIME_TO_COMPILE]
+		+ t->cli_args.values[DONGLE_COOLDOWN];
+	c->right->available_at = c->left->available_at;
 	pthread_cond_broadcast(&t->dongle_cond);
 	pthread_mutex_unlock(&t->dongle_lock);
 }

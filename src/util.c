@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include "codexion.h"
 
 int	init_dongles(t_table *t, int n)
@@ -92,19 +91,4 @@ void	destroy_table(t_table *t)
 		pthread_mutex_destroy(&t->start_lock);
 	if (t->books.stop_lock_ready)
 		pthread_mutex_destroy(&t->stop_lock);
-}
-
-void	display_table(t_table *t)
-{
-	int	i;
-
-	i = 0;
-	while (i < t->cli_args.values[NUM_CODERS])
-	{
-		printf("Coder #%d -> left_dongle #%d, right_dongle #%d\n",
-			t->coders[i].id,
-			t->coders[i].left->id,
-			t->coders[i].right->id);
-		i++;
-	}
 }

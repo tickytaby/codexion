@@ -32,7 +32,6 @@ typedef struct ValidateInt
 }	t_validatedInt;
 
 t_validatedInt		validate_numstr(char *s);
-void				print_args(t_cliArgs args);
 t_cliArgsValidation	validate_cli_args(int argc, char *argv[]);
 void				display_args(t_cliArgsValidation args);
 
